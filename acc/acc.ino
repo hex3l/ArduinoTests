@@ -27,7 +27,7 @@ void loop()
   FunctionsMPU(); // Acquisisco assi AcX, AcY, AcZ.
   Pitch = FunctionsPitchRoll(AcY, AcX, AcZ);  //Calcolo angolo Pitch
   
-  int angle = map(Pitch, -90, 90, 100, 0);
+  int angle = map(Pitch, -90, 90, 360, 0);
 
 
   Serial.print("Pitch: "); Serial.print(Pitch);
@@ -48,7 +48,7 @@ void loop()
       }
     }
   }
-  delay(100);
+  delay(500);
 }
 
 void init_MPU(){
