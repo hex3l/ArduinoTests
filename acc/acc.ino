@@ -4,9 +4,9 @@
 
 #include <Wire.h>
 #define MPU 0x68  // I2C address of the MPU-6050
-
-double AcX,AcY,AcZ;
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
 int angle, led;
+int Pitch;
 
 void setup(){
   Serial.begin(9600);
@@ -25,8 +25,13 @@ void setup(){
 void loop()
 {
   FunctionsMPU(); // Acquisisco assi AcX, AcY, AcZ.
+  Pitch = FunctionsPitchRoll(AcY, AcX, AcZ);  //Calcolo angolo Pitch
+  
+  int angle = map(Pitch, -90, 90, 100, 0);
 
-  angle = map(AcY, -16000, 16000, 0, 360);
+
+  Serial.print("Pitch: "); Serial.print(Pitch);
+  Serial.print("\t");
 
   if(angle > 20 || angle < -20){
     if(angle > 20){
@@ -55,13 +60,30 @@ void init_MPU(){
   delay(1000);
 }
 
+//Funzione per il calcolo degli angoli Pitch e Roll
+double FunctionsPitchRoll(double A, double B, double C){
+  double DatoA, DatoB, Value;
+  DatoA = A;
+  DatoB = (B*B) + (C*C);
+  DatoB = sqrt(DatoB);
+  
+  Value = atan2(DatoA, DatoB);
+  Value = Value * 180/3.14;
+  
+  return (int)Value;
+}
+
 //Funzione per l'acquisizione degli assi X,Y,Z del MPU6050
 void FunctionsMPU(){
-  Wire.beginTransmission(MPU);
+    Wire.beginTransmission(MPU);
   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU,6,true);  // request a total of 14 registers
+  Wire.requestFrom(MPU,14,true);  // request a total of 14 registers
   AcX=Wire.read()<<8|Wire.read();  // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)     
   AcY=Wire.read()<<8|Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-  AcZ=Wire.read()<<8|Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+  AcZ=Wire.read()<<8|Wire.read();  // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+  Tmp=Wire.read()<<8|Wire.read();  // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+  GyX=Wire.read()<<8|Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
+  GyY=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
+  GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 }
